@@ -7,6 +7,10 @@ dist: xenial
 jdk:
   - oraclejdk8
 
+compiler:
+  - clang
+  - gcc
+
 addons:
   apt:
     sources:
@@ -27,5 +31,13 @@ addons:
       - python3-pil
 
 script:
-  - bazel test -c opt --copt=-Wno-maybe-uninitialized --copt=-Wno-sign-compare --dynamic_mode=off --show_progress_rate_limit=300 --test_output=errors //...
-  - bazel run -c opt --copt=-Wno-maybe-uninitialized --copt=-Wno-sign-compare //:python_random_agent --define headless=osmesa
+  - case "${CXX}" in
+      "g++")
+        bazel test --show_progress_rate_limit=20 --test_output=errors -c opt --dynamic_mode=off --copt=-Wno-sign-compare --copt=-Wno-maybe-uninitialized //... ;
+        bazel run -c opt --dynamic_mode=off --copt=-Wno-maybe-uninitialized --copt=-Wno-sign-compare //:python_random_agent --define headless=osmesa ;
+        ;;
+      "clang++")
+        bazel test --show_progress_rate_limit=20 --test_output=errors -c opt --dynamic_mode=off --copt=-Wno-sign-compare --copt=-Wno-uninitialized --cxxopt=-std=c++11 //... ;
+        bazel run -c opt --dynamic_mode=off --copt=-Wno-maybe-uninitialized --copt=-Wno-sign-compare --cxxopt=-std=c++11 //:python_random_agent --define headless=osmesa ;
+        ;;
+    esac
